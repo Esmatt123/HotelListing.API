@@ -10,10 +10,12 @@ namespace HotelListing.API.Controllers
     public class AccountController : ControllerBase
     {
         private readonly IAuthManager _authManager;
+        private readonly ILogger<AccountController> _logger;
 
-        public AccountController(IAuthManager authManager)
+        public AccountController(IAuthManager authManager, ILogger<AccountController> logger)
         {
             this._authManager = authManager;
+            this._logger = logger;
         }
 
         [HttpPost]
@@ -23,15 +25,19 @@ namespace HotelListing.API.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult> Register([FromBody] ApiUserDto apiUserDto)
         {
-            var errors = await _authManager.Register(apiUserDto);
-            if (errors.Any()) { 
-            foreach (var error in errors)
-                {
-                    ModelState.AddModelError(error.Code, error.Description);
+           
+            _logger.LogInformation($"Registration Attempt for {apiUserDto.Email}");
+                var errors = await _authManager.Register(apiUserDto);
+                if (errors.Any()) { 
+                foreach (var error in errors)
+                    {
+                        ModelState.AddModelError(error.Code, error.Description);
+                    }
+                    return BadRequest(ModelState);
                 }
-                return BadRequest(ModelState);
-            }
-            return Ok();
+                return Ok();
+            
+            
         }
 
         [HttpPost]
@@ -41,12 +47,17 @@ namespace HotelListing.API.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult> Login([FromBody] LoginDto loginDto)
         {
-            var authResponse = await _authManager.Login(loginDto);
-            if(authResponse == null)
-            {
-                return Unauthorized();
-            }
-            return Ok(authResponse);
+            _logger.LogInformation($"Login Attempt for {loginDto.Email}");
+           
+     var authResponse = await _authManager.Login(loginDto);
+                if(authResponse == null)
+                {
+                    return Unauthorized();
+                }
+                return Ok(authResponse);
+            
+           
+           
         }
 
         [HttpPost]
